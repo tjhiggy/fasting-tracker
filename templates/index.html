@@ -1,0 +1,99 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Fasting Tracker</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 40px; max-width: 900px; }
+      .card { border: 1px solid #ddd; padding: 16px; border-radius: 10px; margin-bottom: 16px; }
+      .muted { color: #666; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { text-align: left; padding: 10px; border-bottom: 1px solid #eee; vertical-align: top; }
+      input[type="text"] { width: 100%; padding: 8px; }
+      button { padding: 10px 14px; cursor: pointer; }
+      .row { display: flex; gap: 12px; align-items: end; }
+      .row > * { flex: 1; }
+      .btn { background: #111; color: #fff; border: none; border-radius: 8px; }
+      .btn-secondary { background: #555; color: #fff; border: none; border-radius: 8px; }
+      code { background: #f6f6f6; padding: 2px 6px; border-radius: 6px; }
+    </style>
+  </head>
+  <body>
+    <h1>Fasting Tracker</h1>
+
+    <div class="card">
+      {% if active_fast %}
+        <h2>Active fast</h2>
+        <p><strong>Started (UTC):</strong> <code>{{ active_fast["start"].isoformat(timespec="seconds") }}</code></p>
+        {% if active_fast["notes"] %}
+          <p><strong>Notes:</strong> {{ active_fast["notes"] }}</p>
+        {% endif %}
+
+        <form method="post" action="{{ url_for('end_fast', fast_id=active_fast['id']) }}">
+          <button class="btn" type="submit">End fast</button>
+        </form>
+      {% else %}
+        <h2>No active fast</h2>
+        <form method="post" action="{{ url_for('start_fast') }}">
+          <div class="row">
+            <div>
+              <label class="muted" for="notes">Notes (optional)</label>
+              <input id="notes" name="notes" type="text" placeholder="e.g., 16:8, black coffee only" />
+            </div>
+            <div style="flex: 0 0 auto;">
+              <button class="btn" type="submit">Start fast</button>
+            </div>
+          </div>
+        </form>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h2>History</h2>
+      {% if fasts %}
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Start (UTC)</th>
+              <th>End (UTC)</th>
+              <th>Duration (hrs)</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for f in fasts %}
+              <tr>
+                <td>{{ f["id"] }}</td>
+                <td>
+                  {% if f["start"] %}
+                    <code>{{ f["start"].isoformat(timespec="seconds") }}</code>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if f["end"] %}
+                    <code>{{ f["end"].isoformat(timespec="seconds") }}</code>
+                  {% else %}
+                    <strong>ACTIVE</strong>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if f["duration"] is not none %}
+                    {{ f["duration"] }}
+                  {% elif f["end"] is none %}
+                    ACTIVE
+                  {% else %}
+                    -
+                  {% endif %}
+                </td>
+                <td>{{ f["notes"] if f["notes"] else "" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="muted">No fasts yet. Start one.</p>
+      {% endif %}
+    </div>
+  </body>
+</html>
